@@ -1,0 +1,1 @@
+I am building a Firefox extension using WXT, TypeScript, and React. Always prefer using the browser.* namespace over chrome.*. When suggesting DOM selectors for Strava, prioritize stable ARIA labels or data-testid attributes.
