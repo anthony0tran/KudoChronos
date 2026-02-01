@@ -4,6 +4,9 @@ import './App.css';
 
 function App() {
   const [feedCount, setFeedCount] = useState<number | null>(null);
+  const [kudoCount, setKudoCount] = useState<number | null>(null);
+  const [kudosClicked, setKudosClicked] = useState<number>(0);
+  const [isGivingKudos, setIsGivingKudos] = useState<boolean>(false);
 
   // Load feed count from storage on mount
   useEffect(() => {
@@ -46,10 +49,24 @@ function App() {
               .then((response) => {
                 console.log('Feed entries retrieved:', response);
                 console.log('Setting feedCount to:', response.count);
+                console.log('Kudo buttons found:', response.kudoCount);
                 setFeedCount(response.count);
+                setKudoCount(response.kudoCount);
                 // Save to storage so it persists when popup reopens
                 browser.storage.local.set({ feedCount: response.count });
-                // TODO: Process feed entries and give kudos
+                
+                // Start giving kudos
+                setIsGivingKudos(true);
+                browser.tabs.sendMessage(tabId, { action: 'giveKudos' })
+                  .then((kudoResponse) => {
+                    console.log('Kudos given:', kudoResponse);
+                    setKudosClicked(kudoResponse.totalClicked);
+                    setIsGivingKudos(false);
+                  })
+                  .catch((error) => {
+                    console.error('Error giving kudos:', error);
+                    setIsGivingKudos(false);
+                  });
               })
               .catch((error) => console.error('Error getting feed entries:', error));
           }
@@ -64,8 +81,11 @@ function App() {
     <div className="popup-container">
       <h1>KudoChronos</h1>
       {feedCount !== null && <h2>Feed entries: {feedCount}</h2>}
-      <button onClick={handleClick}>
-        Give kudos!
+      {kudoCount !== null && <h2>Kudos available: {kudoCount}</h2>}
+      {isGivingKudos && <h2>Giving kudos... {kudosClicked} clicked</h2>}
+      {!isGivingKudos && kudosClicked > 0 && <h2>✓ Done! {kudosClicked} kudos given</h2>}
+      <button onClick={handleClick} disabled={isGivingKudos}>
+        {isGivingKudos ? 'Giving kudos...' : 'Give kudos!'}
       </button>
     </div>
   );
