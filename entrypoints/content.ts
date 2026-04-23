@@ -84,6 +84,7 @@ async function runKudosProcess(onProgress?: (payload: ProgressPayload) => void):
     let totalClicked = 0;
     let consecutiveFilled = 0;
     let idleScrolls = 0;
+    let hasStarted = false;
     const MAX_CONSECUTIVE_FILLED = 10;
     const MAX_IDLE_SCROLLS = 3;
 
@@ -107,19 +108,14 @@ async function runKudosProcess(onProgress?: (payload: ProgressPayload) => void):
         const filledKudos = entry.querySelector('[data-testid="filled_kudos"]');
 
         if (unfilledKudos) {
-          // Never click entries that are already filled.
-          if (filledKudos) {
-            consecutiveFilled++;
-            if (consecutiveFilled >= MAX_CONSECUTIVE_FILLED) {
-              break;
-            }
-            continue;
-          }
-
           // Only click the exact button wrapping the unfilled icon.
           const kudosButton = unfilledKudos.closest('button') as HTMLElement | null;
 
           if (kudosButton) {
+            if (!hasStarted) {
+              hasStarted = true;
+            }
+
             const personName = getOwnerNameFromEntry(entry);
             kudosButton.scrollIntoView({ block: 'center', behavior: 'auto' });
             await sleep(300);
@@ -152,7 +148,7 @@ async function runKudosProcess(onProgress?: (payload: ProgressPayload) => void):
           continue;
         }
 
-        if (filledKudos) {
+        if (hasStarted && filledKudos) {
           consecutiveFilled++;
           if (consecutiveFilled >= MAX_CONSECUTIVE_FILLED) {
             break;
@@ -189,7 +185,7 @@ async function runKudosProcess(onProgress?: (payload: ProgressPayload) => void):
     return {
       success: true,
       totalClicked,
-      stopped: consecutiveFilled >= 10,
+      stopped: hasStarted && consecutiveFilled >= 10,
     };
   } catch (error) {
     return {
