@@ -5,7 +5,20 @@ type KudosRunResult = {
   error?: string;
 };
 
+type KudosLedger = {
+  totalKudosGiven: number;
+  kudosByPerson: Record<string, number>;
+};
+
+type ProgressPayload = {
+  clicked: number;
+  personName: string;
+  overallTotal: number;
+  personTotal: number;
+};
+
 let isRunning = false;
+const KUDOS_LEDGER_KEY = 'kudosLedger';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -20,7 +33,45 @@ function clickElement(el: HTMLElement) {
   el.click();
 }
 
-async function runKudosProcess(onProgress?: (clicked: number) => void): Promise<KudosRunResult> {
+function getOwnerNameFromEntry(entry: Element): string {
+  const ownerNameEl = entry.querySelector('[data-testid="owners-name"]') as HTMLElement | null;
+  const rawName = ownerNameEl?.textContent?.trim();
+  return rawName && rawName.length > 0 ? rawName : 'Unknown athlete';
+}
+
+async function getKudosLedger(): Promise<KudosLedger> {
+  const result = await browser.storage.local.get(KUDOS_LEDGER_KEY);
+  const raw = result[KUDOS_LEDGER_KEY] as Partial<KudosLedger> | undefined;
+
+  const totalKudosGiven = typeof raw?.totalKudosGiven === 'number' ? raw.totalKudosGiven : 0;
+  const rawByPerson = raw?.kudosByPerson;
+  const kudosByPerson: Record<string, number> = {};
+
+  if (rawByPerson && typeof rawByPerson === 'object') {
+    for (const [name, count] of Object.entries(rawByPerson)) {
+      if (typeof count === 'number') {
+        kudosByPerson[name] = count;
+      }
+    }
+  }
+
+  return { totalKudosGiven, kudosByPerson };
+}
+
+async function persistKudo(personName: string): Promise<{ overallTotal: number; personTotal: number }> {
+  const ledger = await getKudosLedger();
+  ledger.totalKudosGiven += 1;
+  ledger.kudosByPerson[personName] = (ledger.kudosByPerson[personName] ?? 0) + 1;
+
+  await browser.storage.local.set({ [KUDOS_LEDGER_KEY]: ledger });
+
+  return {
+    overallTotal: ledger.totalKudosGiven,
+    personTotal: ledger.kudosByPerson[personName],
+  };
+}
+
+async function runKudosProcess(onProgress?: (payload: ProgressPayload) => void): Promise<KudosRunResult> {
   if (isRunning) {
     return { success: false, totalClicked: 0, stopped: false, error: 'KudoChronos is already running.' };
   }
@@ -69,6 +120,7 @@ async function runKudosProcess(onProgress?: (clicked: number) => void): Promise<
           const kudosButton = unfilledKudos.closest('button') as HTMLElement | null;
 
           if (kudosButton) {
+            const personName = getOwnerNameFromEntry(entry);
             kudosButton.scrollIntoView({ block: 'center', behavior: 'auto' });
             await sleep(300);
 
@@ -82,9 +134,18 @@ async function runKudosProcess(onProgress?: (clicked: number) => void): Promise<
               await sleep(800);
             }
 
-            totalClicked++;
-            consecutiveFilled = 0;
-            onProgress?.(totalClicked);
+            const nowFilled = !!entry.querySelector('[data-testid="filled_kudos"]');
+            if (nowFilled) {
+              totalClicked++;
+              consecutiveFilled = 0;
+              const { overallTotal, personTotal } = await persistKudo(personName);
+              onProgress?.({
+                clicked: totalClicked,
+                personName,
+                overallTotal,
+                personTotal,
+              });
+            }
           }
 
           await sleep(CLICK_PAUSE_MS);
@@ -189,10 +250,10 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   
   if (message.action === 'giveKudos') {
-    runKudosProcess((clicked) => {
+    runKudosProcess((payload) => {
       if (message.trackProgress) {
         browser.runtime
-          .sendMessage({ action: 'kudosProgress', clicked })
+          .sendMessage({ action: 'kudosProgress', ...payload })
           .catch(() => {
             // Popup may be closed; ignore message delivery failures.
           });
