@@ -16,6 +16,18 @@ function App() {
         setFeedCount(result.feedCount);
       }
     });
+
+    const onMessage = (message: any) => {
+      if (message?.action === 'kudosProgress' && typeof message.clicked === 'number') {
+        setKudosClicked(message.clicked);
+      }
+    };
+
+    browser.runtime.onMessage.addListener(onMessage);
+
+    return () => {
+      browser.runtime.onMessage.removeListener(onMessage);
+    };
   }, []);
 
   const waitForTabComplete = async (tabId: number) => {
@@ -42,9 +54,23 @@ function App() {
     setKudoCount(feedResponse.kudoCount ?? 0);
     browser.storage.local.set({ feedCount: feedResponse.count ?? 0 });
 
-    const kudoResponse = await browser.tabs.sendMessage(tabId, { action: 'giveKudos' });
+    const kudoResponse = await browser.tabs.sendMessage(tabId, { action: 'giveKudos', trackProgress: true });
     if (kudoResponse?.success) {
       setKudosClicked(kudoResponse.totalClicked ?? 0);
+
+      if (kudoResponse.stopped) {
+        browser.notifications
+          .create({
+            type: 'basic',
+            iconUrl: '/icon/96.png',
+            title: 'KudoChronos finished',
+            message: `Finished! Gave ${kudoResponse.totalClicked ?? 0} kudos!`,
+          })
+          .catch((error) => {
+            console.error('Notification error:', error);
+          });
+      }
+
       return;
     }
 

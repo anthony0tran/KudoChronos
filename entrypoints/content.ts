@@ -20,7 +20,7 @@ function clickElement(el: HTMLElement) {
   el.click();
 }
 
-async function runKudosProcess(): Promise<KudosRunResult> {
+async function runKudosProcess(onProgress?: (clicked: number) => void): Promise<KudosRunResult> {
   if (isRunning) {
     return { success: false, totalClicked: 0, stopped: false, error: 'KudoChronos is already running.' };
   }
@@ -56,9 +56,17 @@ async function runKudosProcess(): Promise<KudosRunResult> {
         const filledKudos = entry.querySelector('[data-testid="filled_kudos"]');
 
         if (unfilledKudos) {
-          const kudosButton =
-            (unfilledKudos.closest('button') as HTMLElement | null) ??
-            (entry.querySelector('[data-testid="kudos_button"]') as HTMLElement | null);
+          // Never click entries that are already filled.
+          if (filledKudos) {
+            consecutiveFilled++;
+            if (consecutiveFilled >= MAX_CONSECUTIVE_FILLED) {
+              break;
+            }
+            continue;
+          }
+
+          // Only click the exact button wrapping the unfilled icon.
+          const kudosButton = unfilledKudos.closest('button') as HTMLElement | null;
 
           if (kudosButton) {
             kudosButton.scrollIntoView({ block: 'center', behavior: 'auto' });
@@ -73,12 +81,10 @@ async function runKudosProcess(): Promise<KudosRunResult> {
               clickElement(kudosButton);
               await sleep(800);
             }
-          }
 
-          const nowFilled = !!entry.querySelector('[data-testid="filled_kudos"]');
-          if (nowFilled) {
             totalClicked++;
             consecutiveFilled = 0;
+            onProgress?.(totalClicked);
           }
 
           await sleep(CLICK_PAUSE_MS);
@@ -183,7 +189,15 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   
   if (message.action === 'giveKudos') {
-    runKudosProcess().then((result) => {
+    runKudosProcess((clicked) => {
+      if (message.trackProgress) {
+        browser.runtime
+          .sendMessage({ action: 'kudosProgress', clicked })
+          .catch(() => {
+            // Popup may be closed; ignore message delivery failures.
+          });
+      }
+    }).then((result) => {
       sendResponse(result);
     });
 
