@@ -115,26 +115,54 @@ function App() {
 
     return (
         <div className="popup-container">
-            <h1>KudoChronos</h1>
-            <h2>Total kudos given: {overallKudosTotal}</h2>
-            {feedCount !== null && <h2>Feed entries: {feedCount}</h2>}
-            {kudoCount !== null && <h2>Kudos available: {kudoCount}</h2>}
-            {isGivingKudos && <h2>Giving kudos... {kudosClicked} clicked</h2>}
-            {!isGivingKudos && kudosClicked > 0 && <h2>✓ Done! {kudosClicked} kudos given</h2>}
+            <header className="popup-header">
+                <p className="app-name">KudoChronos</p>
+                <p className="app-subtitle">Session stats</p>
+            </header>
+
+            <section className="stats-grid">
+                <article className="stat-card stat-card-primary">
+                    <p className="stat-label">Total kudos given</p>
+                    <p className="stat-value">{overallKudosTotal}</p>
+                </article>
+
+                {feedCount !== null && (
+                    <article className="stat-card">
+                        <p className="stat-label">Feed entries</p>
+                        <p className="stat-value">{feedCount}</p>
+                    </article>
+                )}
+
+                {kudoCount !== null && (
+                    <article className="stat-card">
+                        <p className="stat-label">Kudos available</p>
+                        <p className="stat-value">{kudoCount}</p>
+                    </article>
+                )}
+            </section>
+
+            <section className="status-panel" aria-live="polite">
+                {isGivingKudos && <p>Giving kudos... {kudosClicked} clicked</p>}
+                {!isGivingKudos && kudosClicked > 0 && <p>Done. {kudosClicked} kudos given.</p>}
+                {!isGivingKudos && kudosClicked === 0 && <p>Ready to run on your Strava dashboard.</p>}
+            </section>
+
             {topRecipients.length > 0 && (
-                <div>
+                <section className="recipients-panel">
                     <h2>Top recipients</h2>
                     <ul>
                         {topRecipients.map(([name, count]) => (
                             <li key={name}>
-                                {name}: {count}
+                                <span>{name}</span>
+                                <strong>{count}</strong>
                             </li>
                         ))}
                     </ul>
-                </div>
+                </section>
             )}
-            <button onClick={handleClick} disabled={isGivingKudos}>
-                {isGivingKudos ? 'Giving kudos...' : 'Give kudos!'}
+
+            <button className="primary-action" onClick={handleClick} disabled={isGivingKudos}>
+                {isGivingKudos ? 'Giving kudos...' : 'Give kudos'}
             </button>
         </div>
     );
