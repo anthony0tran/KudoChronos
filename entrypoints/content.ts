@@ -19,6 +19,7 @@ type ProgressPayload = {
 
 let isRunning = false;
 const KUDOS_LEDGER_KEY = 'kudosLedger';
+const OWN_NAME_TO_SKIP = 'Anthony Tran';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -108,6 +109,11 @@ async function runKudosProcess(onProgress?: (payload: ProgressPayload) => void):
         const filledKudos = entry.querySelector('[data-testid="filled_kudos"]');
 
         if (unfilledKudos) {
+          const personName = getOwnerNameFromEntry(entry);
+          if (personName === OWN_NAME_TO_SKIP) {
+            continue;
+          }
+
           // Only click the exact button wrapping the unfilled icon.
           const kudosButton = unfilledKudos.closest('button') as HTMLElement | null;
 
@@ -116,7 +122,6 @@ async function runKudosProcess(onProgress?: (payload: ProgressPayload) => void):
               hasStarted = true;
             }
 
-            const personName = getOwnerNameFromEntry(entry);
             kudosButton.scrollIntoView({ block: 'center', behavior: 'auto' });
             await sleep(300);
 
