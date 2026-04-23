@@ -1,3 +1,141 @@
+type KudosRunResult = {
+  success: boolean;
+  totalClicked: number;
+  stopped: boolean;
+  error?: string;
+};
+
+let isRunning = false;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const INITIAL_PAGE_SETTLE_MS = 1500;
+const CLICK_PAUSE_MS = 2500;
+const SCROLL_LOAD_WAIT_MS = 3000;
+
+function clickElement(el: HTMLElement) {
+  el.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, cancelable: true }));
+  el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+  el.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+  el.click();
+}
+
+async function runKudosProcess(): Promise<KudosRunResult> {
+  if (isRunning) {
+    return { success: false, totalClicked: 0, stopped: false, error: 'KudoChronos is already running.' };
+  }
+
+  isRunning = true;
+
+  try {
+    const processedEntries = new WeakSet<Element>();
+
+    let totalClicked = 0;
+    let consecutiveFilled = 0;
+    let idleScrolls = 0;
+    const MAX_CONSECUTIVE_FILLED = 10;
+    const MAX_IDLE_SCROLLS = 3;
+
+    // Always start from the top of the feed.
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    await sleep(INITIAL_PAGE_SETTLE_MS);
+
+    while (consecutiveFilled < MAX_CONSECUTIVE_FILLED) {
+      const feedEntries = Array.from(document.querySelectorAll('[data-testid="web-feed-entry"]'));
+      let processedThisPass = false;
+
+      for (const entry of feedEntries) {
+        if (processedEntries.has(entry)) {
+          continue;
+        }
+
+        processedEntries.add(entry);
+        processedThisPass = true;
+
+        const unfilledKudos = entry.querySelector('[data-testid="unfilled_kudos"]') as HTMLElement | null;
+        const filledKudos = entry.querySelector('[data-testid="filled_kudos"]');
+
+        if (unfilledKudos) {
+          const kudosButton =
+            (unfilledKudos.closest('button') as HTMLElement | null) ??
+            (entry.querySelector('[data-testid="kudos_button"]') as HTMLElement | null);
+
+          if (kudosButton) {
+            kudosButton.scrollIntoView({ block: 'center', behavior: 'auto' });
+            await sleep(300);
+
+            clickElement(kudosButton);
+            await sleep(800);
+
+            // Retry once if Strava didn't toggle state.
+            const stillUnfilled = !!entry.querySelector('[data-testid="unfilled_kudos"]');
+            if (stillUnfilled) {
+              clickElement(kudosButton);
+              await sleep(800);
+            }
+          }
+
+          const nowFilled = !!entry.querySelector('[data-testid="filled_kudos"]');
+          if (nowFilled) {
+            totalClicked++;
+            consecutiveFilled = 0;
+          }
+
+          await sleep(CLICK_PAUSE_MS);
+          continue;
+        }
+
+        if (filledKudos) {
+          consecutiveFilled++;
+          if (consecutiveFilled >= MAX_CONSECUTIVE_FILLED) {
+            break;
+          }
+        }
+      }
+
+      if (consecutiveFilled >= MAX_CONSECUTIVE_FILLED) {
+        break;
+      }
+
+      if (!processedThisPass) {
+        const previousEntryCount = feedEntries.length;
+        const previousHeight = document.body.scrollHeight;
+
+        window.scrollBy({ top: Math.floor(window.innerHeight * 0.9), behavior: 'auto' });
+        await sleep(SCROLL_LOAD_WAIT_MS);
+
+        const nextEntryCount = document.querySelectorAll('[data-testid="web-feed-entry"]').length;
+        const nextHeight = document.body.scrollHeight;
+
+        if (nextEntryCount === previousEntryCount && nextHeight === previousHeight) {
+          idleScrolls++;
+        } else {
+          idleScrolls = 0;
+        }
+
+        if (idleScrolls >= MAX_IDLE_SCROLLS) {
+          break;
+        }
+      }
+    }
+
+    return {
+      success: true,
+      totalClicked,
+      stopped: consecutiveFilled >= 10,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      totalClicked: 0,
+      stopped: false,
+      error: String(error),
+    };
+  } finally {
+    isRunning = false;
+  }
+}
+
 export default defineContentScript({
   matches: ['*://*.strava.com/*'],
   main() {
@@ -45,61 +183,10 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   
   if (message.action === 'giveKudos') {
-    let totalClicked = 0;
-    
-    const giveKudosLoop = async () => {
-      // Check if we've found filled kudos (already gave kudos to this activity)
-      const filledKudos = document.querySelector('[data-testid="filled_kudos"]');
-      if (filledKudos) {
-        console.log('Found filled_kudos, stopping...');
-        sendResponse({ success: true, totalClicked, stopped: true });
-        return;
-      }
-      
-      // Find all unfilled kudo buttons
-      const unfilledButtons = document.querySelectorAll('[data-testid="unfilled_kudos"]');
-      console.log(`Found ${unfilledButtons.length} unfilled kudos`);
-      
-      if (unfilledButtons.length === 0) {
-        // No more unfilled kudos visible, scroll down to load more
-        console.log('No unfilled kudos found, scrolling down...');
-        window.scrollTo(0, document.body.scrollHeight);
-        
-        // Wait for content to load
-        setTimeout(() => {
-          const newButtons = document.querySelectorAll('[data-testid="unfilled_kudos"]');
-          if (newButtons.length === 0) {
-            // No new content loaded, we're done
-            console.log('No more content to load, stopping...');
-            sendResponse({ success: true, totalClicked, stopped: false });
-          } else {
-            // Continue with new content
-            giveKudosLoop();
-          }
-        }, 2000);
-        return;
-      }
-      
-      // Click each unfilled kudo button with delay
-      for (let i = 0; i < unfilledButtons.length; i++) {
-        const button = unfilledButtons[i] as HTMLElement;
-        console.log(`Clicking kudo ${i + 1}/${unfilledButtons.length}`);
-        button.click();
-        totalClicked++;
-        
-        // Wait before clicking next (rate limiting)
-        await new Promise(resolve => setTimeout(resolve, 1500));
-      }
-      
-      // After clicking all visible buttons, scroll and continue
-      console.log('Scrolling to load more...');
-      window.scrollTo(0, document.body.scrollHeight);
-      
-      // Wait for new content to load, then continue loop
-      setTimeout(() => giveKudosLoop(), 2000);
-    };
-    
-    giveKudosLoop();
+    runKudosProcess().then((result) => {
+      sendResponse(result);
+    });
+
     return true; // Keep channel open for async response
   }
   return true; // Keep channel open for async response

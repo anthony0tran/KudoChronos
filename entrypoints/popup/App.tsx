@@ -18,63 +18,69 @@ function App() {
     });
   }, []);
 
-  const handleClick = async () => {
-    // Check if current active tab is already on Strava
-    const [activeTab] = await browser.tabs.query({ active: true, currentWindow: true });
-    
-    let targetTab;
-    if (activeTab?.url?.includes('strava.com')) {
-      debugger;
-      // Already on Strava, use current tab
-      targetTab = activeTab;
-      // Navigate to dashboard if not already there
-      if (!activeTab.url.includes('strava.com/dashboard')) {
-        await browser.tabs.update(activeTab.id!, { url: 'https://www.strava.com/dashboard' });
-      }
-    } else {
-      // Not on Strava, open new tab
-      targetTab = await browser.tabs.create({ url: 'https://www.strava.com/dashboard' });
+  const waitForTabComplete = async (tabId: number) => {
+    const currentTab = await browser.tabs.get(tabId);
+    if (currentTab.status === 'complete') {
+      return;
     }
-    
-    // Wait for dashboard to load
-    const listener = (tabId: number, changeInfo: any) => {
-      if (tabId === targetTab.id && changeInfo.status === 'complete') {
-        browser.tabs.get(tabId).then((updatedTab) => {
-          if (updatedTab.url?.includes('strava.com/dashboard')) {
-            browser.tabs.onUpdated.removeListener(listener);
-            
-            // Request feed entries from content script
-            console.log('Sending message to tab:', tabId);
-            browser.tabs.sendMessage(tabId, { action: 'getFeedEntries' })
-              .then((response) => {
-                console.log('Feed entries retrieved:', response);
-                console.log('Setting feedCount to:', response.count);
-                console.log('Kudo buttons found:', response.kudoCount);
-                setFeedCount(response.count);
-                setKudoCount(response.kudoCount);
-                // Save to storage so it persists when popup reopens
-                browser.storage.local.set({ feedCount: response.count });
-                
-                // Start giving kudos
-                setIsGivingKudos(true);
-                browser.tabs.sendMessage(tabId, { action: 'giveKudos' })
-                  .then((kudoResponse) => {
-                    console.log('Kudos given:', kudoResponse);
-                    setKudosClicked(kudoResponse.totalClicked);
-                    setIsGivingKudos(false);
-                  })
-                  .catch((error) => {
-                    console.error('Error giving kudos:', error);
-                    setIsGivingKudos(false);
-                  });
-              })
-              .catch((error) => console.error('Error getting feed entries:', error));
-          }
-        });
+
+    await new Promise<void>((resolve) => {
+      const listener = (updatedTabId: number, changeInfo: { status?: string }) => {
+        if (updatedTabId === tabId && changeInfo.status === 'complete') {
+          browser.tabs.onUpdated.removeListener(listener);
+          resolve();
+        }
+      };
+
+      browser.tabs.onUpdated.addListener(listener);
+    });
+  };
+
+  const runKudosOnTab = async (tabId: number) => {
+    const feedResponse = await browser.tabs.sendMessage(tabId, { action: 'getFeedEntries' });
+    setFeedCount(feedResponse.count ?? 0);
+    setKudoCount(feedResponse.kudoCount ?? 0);
+    browser.storage.local.set({ feedCount: feedResponse.count ?? 0 });
+
+    const kudoResponse = await browser.tabs.sendMessage(tabId, { action: 'giveKudos' });
+    if (kudoResponse?.success) {
+      setKudosClicked(kudoResponse.totalClicked ?? 0);
+      return;
+    }
+
+    throw new Error(kudoResponse?.error ?? 'Failed to give kudos');
+  };
+
+  const handleClick = async () => {
+    setIsGivingKudos(true);
+    setKudosClicked(0);
+
+    try {
+      const [activeTab] = await browser.tabs.query({ active: true, currentWindow: true });
+
+      let targetTab: typeof activeTab | null | undefined = activeTab ?? null;
+      if (activeTab?.url?.includes('strava.com')) {
+        if (!activeTab.url.includes('strava.com/dashboard')) {
+          targetTab = await browser.tabs.update(activeTab.id!, { url: 'https://www.strava.com/dashboard' });
+          await waitForTabComplete(targetTab!.id!);
+        }
+      } else {
+        targetTab = await browser.tabs.create({ url: 'https://www.strava.com/dashboard' });
+        await waitForTabComplete(targetTab!.id!);
       }
-    };
-    
-    browser.tabs.onUpdated.addListener(listener);
+
+      if (!targetTab?.id) {
+        throw new Error('Unable to find target tab');
+      }
+
+      // Give the content script a brief moment to initialize after navigation.
+      await new Promise((resolve) => setTimeout(resolve, 700));
+      await runKudosOnTab(targetTab.id);
+    } catch (error) {
+      console.error('Error starting kudos process:', error);
+    } finally {
+      setIsGivingKudos(false);
+    }
   };
 
   return (
