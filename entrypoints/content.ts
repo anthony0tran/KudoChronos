@@ -8,6 +8,8 @@ type KudosRunResult = {
 type KudosLedger = {
     totalKudosGiven: number;
     kudosByPerson: Record<string, number>;
+    // history is owned by the popup; preserved here but not modified
+    [key: string]: unknown;
 };
 
 type ProgressPayload = {
@@ -44,19 +46,19 @@ function getOwnerNameFromEntry(entry: Element): string {
 
 async function getKudosLedger(): Promise<KudosLedger> {
     const result = await browser.storage.local.get(KUDOS_LEDGER_KEY);
-    const raw = result[KUDOS_LEDGER_KEY] as Partial<KudosLedger> | undefined;
+    const raw = (result[KUDOS_LEDGER_KEY] ?? {}) as KudosLedger;
 
-    const totalKudosGiven = typeof raw?.totalKudosGiven === 'number' ? raw.totalKudosGiven : 0;
-    const rawByPerson = raw?.kudosByPerson;
+    const totalKudosGiven = typeof raw.totalKudosGiven === 'number' ? raw.totalKudosGiven : 0;
     const kudosByPerson: Record<string, number> = {};
 
-    if (rawByPerson && typeof rawByPerson === 'object') {
-        for (const [name, count] of Object.entries(rawByPerson)) {
-            kudosByPerson[name] = count;
+    if (raw.kudosByPerson && typeof raw.kudosByPerson === 'object') {
+        for (const [name, count] of Object.entries(raw.kudosByPerson as Record<string, unknown>)) {
+            if (typeof count === 'number') kudosByPerson[name] = count;
         }
     }
 
-    return {totalKudosGiven, kudosByPerson};
+    // Spread the entire raw object so unknown fields (e.g. history) are preserved.
+    return {...raw, totalKudosGiven, kudosByPerson};
 }
 
 async function persistKudo(personName: string): Promise<{ overallTotal: number; personTotal: number }> {

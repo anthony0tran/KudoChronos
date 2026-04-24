@@ -1,5 +1,7 @@
 .popup-container {
-  width: 340px;
+  width: 360px;
+  max-height: 620px;
+  overflow-y: auto;
   padding: 14px;
   background: #121212;
   color: #e8eaed;
@@ -11,9 +13,10 @@
 
 .popup-header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   padding: 2px 2px 6px;
+  gap: 8px;
 }
 
 .app-name {
@@ -22,13 +25,67 @@
   font-weight: 600;
   letter-spacing: 0.02em;
   color: #f1f3f4;
+  flex-shrink: 0;
 }
 
-.app-subtitle {
-  margin: 0;
-  font-size: 0.72rem;
-  color: #9aa0a6;
+/* --- Header actions (tabs + about) --- */
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
+
+.view-tabs {
+  display: flex;
+  background: #1e1e1e;
+  border: 1px solid #2e2e2e;
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.view-tab {
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  padding: 3px 9px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #9aa0a6;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.view-tab:hover {
+  color: #e8eaed;
+}
+
+.view-tab-active {
+  background: #2e2e2e;
+  color: #ffffff;
+}
+
+.about-btn {
+  background: transparent;
+  border: 1px solid #3a3a3a;
+  border-radius: 7px;
+  padding: 3px 9px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #9aa0a6;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.about-btn:hover {
+  color: #e8eaed;
+  border-color: #5c6bc0;
+}
+
+/* --- Stats grid (shared) --- */
 
 .stats-grid {
   display: grid;
@@ -66,6 +123,8 @@
   color: #ffffff;
 }
 
+/* --- Home: status panel --- */
+
 .status-panel {
   border-radius: 10px;
   background: #1e1e1e;
@@ -78,6 +137,8 @@
   font-size: 0.84rem;
   color: #c2c7cc;
 }
+
+/* --- Home: recipients panel --- */
 
 .recipients-panel {
   border-radius: 12px;
@@ -115,6 +176,8 @@
   color: #ffffff;
 }
 
+/* --- Primary action button --- */
+
 .primary-action {
   margin-top: 2px;
   width: 100%;
@@ -143,4 +206,97 @@
   color: #8f9499;
   opacity: 0.95;
   cursor: not-allowed;
+}
+
+/* --- Dashboard: history panel --- */
+
+.history-panel {
+  border-radius: 12px;
+  background: #1e1e1e;
+  border: 1px solid #2e2e2e;
+  padding: 10px;
+}
+
+.history-panel h2 {
+  margin: 0 0 8px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #e8eaed;
+}
+
+.history-empty {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #6e7680;
+  text-align: center;
+  padding: 12px 0;
+}
+
+.history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.history-item {
+  background: #181818;
+  border: 1px solid #2a2a2a;
+  border-radius: 9px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.history-item-expandable {
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.history-item-expandable:hover {
+  border-color: #3f51b5;
+}
+
+.history-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+
+.history-timestamp {
+  font-size: 0.78rem;
+  color: #9aa0a6;
+}
+
+.history-badge {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: #3f51b5;
+  border-radius: 20px;
+  padding: 1px 8px;
+  white-space: nowrap;
+}
+
+.history-recipients {
+  margin: 0;
+  font-size: 0.76rem;
+  color: #c2c7cc;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.history-more {
+  color: #6e7680;
+}
+
+.history-expand-hint {
+  font-size: 0.68rem;
+  color: #5c6bc0;
+  margin-top: 1px;
+  user-select: none;
 }

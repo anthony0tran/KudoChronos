@@ -1,6 +1,13 @@
-﻿export type KudosLedger = {
+﻿export type KudosRunEntry = {
+    timestamp: string; // ISO 8601
+    kudosGiven: number;
+    recipients: string[];
+};
+
+export type KudosLedger = {
     totalKudosGiven: number;
     kudosByPerson: Record<string, number>;
+    history: KudosRunEntry[];
 };
 
 export type KudosProgressMessage = {
@@ -22,4 +29,3 @@ export type GiveKudosResponse = {
     stopped?: boolean;
     error?: string;
 };
-

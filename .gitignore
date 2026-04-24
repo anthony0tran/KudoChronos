@@ -14,6 +14,9 @@ dist/
 build/
 *.zip
 
+# --- Firefox Dev Profile (contains cookies/login sessions) ---
+.firefox-profile/
+
 # --- Environment/Secrets ---
 .env
 .env.local
