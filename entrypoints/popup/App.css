@@ -300,3 +300,68 @@
   margin-top: 1px;
   user-select: none;
 }
+
+/* --- Dashboard: data export/import panel --- */
+
+.data-panel {
+  border-radius: 12px;
+  background: #1e1e1e;
+  border: 1px solid #2e2e2e;
+  padding: 10px;
+}
+
+.data-panel h2 {
+  margin: 0 0 8px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #e8eaed;
+}
+
+.data-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.data-btn {
+  flex: 1;
+  background: #252525;
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 0.80rem;
+  font-weight: 600;
+  color: #c2c7cc;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.data-btn:hover {
+  background: #2e2e2e;
+  border-color: #5c6bc0;
+  color: #ffffff;
+}
+
+.data-btn:focus-visible {
+  outline: 2px solid #8ea0ff;
+  outline-offset: 2px;
+}
+
+.data-status {
+  margin: 8px 0 0;
+  font-size: 0.78rem;
+  border-radius: 6px;
+  padding: 5px 8px;
+}
+
+.data-status-success {
+  background: #1a2e1a;
+  border: 1px solid #2e6b2e;
+  color: #81c784;
+}
+
+.data-status-error {
+  background: #2e1a1a;
+  border: 1px solid #6b2e2e;
+  color: #e57373;
+}
+

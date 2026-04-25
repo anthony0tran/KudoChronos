@@ -5,7 +5,7 @@ import {FEED_COUNT_KEY, KUDOS_LEDGER_KEY} from './lib/constants';
 import {isKudosProgressMessage, parseKudosLedger} from './lib/helpers';
 import {getFeedEntries, giveKudos, notifyFinished} from './lib/kudos';
 import {resolveDashboardTabId} from './lib/tabs';
-import type {KudosRunEntry} from './lib/types';
+import type {KudosLedger, KudosRunEntry} from './lib/types';
 
 type ViewTab = 'home' | 'dashboard';
 
@@ -29,7 +29,9 @@ function App() {
     const [kudosByPerson, setKudosByPerson] = useState<Record<string, number>>({});
     const [history, setHistory] = useState<KudosRunEntry[]>([]);
     const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
+    const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const recipientsRef = useRef<string[]>([]);
+    const importFileRef = useRef<HTMLInputElement>(null);
 
     const toggleExpanded = (index: number) => {
         setExpandedItems((prev) => {
@@ -126,6 +128,42 @@ function App() {
             console.error('Error starting kudos process:', error);
         } finally {
             setIsGivingKudos(false);
+        }
+    };
+
+    const handleExport = async () => {
+        const result = await browser.storage.local.get(KUDOS_LEDGER_KEY);
+        const ledger = parseKudosLedger(result[KUDOS_LEDGER_KEY]);
+        const blob = new Blob([JSON.stringify(ledger, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `kudochronos-stats-${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const handleImportClick = () => {
+        setImportStatus('idle');
+        importFileRef.current?.click();
+    };
+
+    const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        // reset so the same file can be re-imported
+        e.target.value = '';
+        try {
+            const text = await file.text();
+            const raw: unknown = JSON.parse(text);
+            const ledger: KudosLedger = parseKudosLedger(raw);
+            await browser.storage.local.set({[KUDOS_LEDGER_KEY]: ledger});
+            setOverallKudosTotal(ledger.totalKudosGiven);
+            setKudosByPerson(ledger.kudosByPerson);
+            setHistory([...ledger.history].reverse());
+            setImportStatus('success');
+        } catch {
+            setImportStatus('error');
         }
     };
 
@@ -283,6 +321,36 @@ function App() {
                                 })}
                             </ul>
                         )}
+                    </section>
+
+                    <section className="data-panel" aria-label="Export and import statistics">
+                        <h2>Data</h2>
+                        <div className="data-actions">
+                            <button className="data-btn" onClick={handleExport} aria-label="Export statistics as JSON">
+                                ↓ Export
+                            </button>
+                            <button className="data-btn" onClick={handleImportClick} aria-label="Import statistics from JSON file">
+                                ↑ Import
+                            </button>
+                        </div>
+                        {importStatus === 'success' && (
+                            <p className="data-status data-status-success" role="status">
+                                Stats imported successfully.
+                            </p>
+                        )}
+                        {importStatus === 'error' && (
+                            <p className="data-status data-status-error" role="alert">
+                                Invalid file. Please import a valid KudoChronos JSON export.
+                            </p>
+                        )}
+                        <input
+                            ref={importFileRef}
+                            type="file"
+                            accept="application/json,.json"
+                            aria-hidden="true"
+                            style={{display: 'none'}}
+                            onChange={handleImportFile}
+                        />
                     </section>
                 </>
             )}
