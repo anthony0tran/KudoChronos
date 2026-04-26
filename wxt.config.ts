@@ -26,6 +26,16 @@ export default defineConfig({
         id: 'kudochronos@anthony0tran',
       },
     },
+    data_collection_permissions: {
+      usage_data_collection: false,
+      technical_data_collection: false,
+      financially_sensitive_data: false,
+      health_data: false,
+      personal_communications_data: false,
+      location_data: false,
+      website_activity: false,
+      usage_profiles: false,
+    },
   },
   webExt: {
     binaries: {
