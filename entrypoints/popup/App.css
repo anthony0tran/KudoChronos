@@ -82,7 +82,7 @@
 
 .about-btn:hover {
   color: #e8eaed;
-  border-color: #5c6bc0;
+  border-color: #fc4c02;
 }
 
 /* --- Stats grid (shared) --- */
@@ -101,9 +101,8 @@
 }
 
 .stat-card-primary {
-  grid-column: 1 / -1;
-  border-color: #3f51b5;
-  background: #202744;
+  border-color: #fc4c02;
+  background: #1e0d00;
 }
 
 .stat-label {
@@ -186,18 +185,18 @@
   padding: 10px 12px;
   font-size: 0.92rem;
   font-weight: 700;
-  background: #3f51b5;
+  background: #fc4c02;
   color: #ffffff;
   cursor: pointer;
   transition: background-color 0.2s ease, opacity 0.2s ease;
 }
 
 .primary-action:hover:enabled {
-  background: #5c6bc0;
+  background: #fd6a2a;
 }
 
 .primary-action:focus-visible {
-  outline: 2px solid #8ea0ff;
+  outline: 2px solid #fd6a2a;
   outline-offset: 2px;
 }
 
@@ -257,7 +256,7 @@
 }
 
 .history-item-expandable:hover {
-  border-color: #3f51b5;
+  border-color: #fc4c02;
 }
 
 .history-item-header {
@@ -276,7 +275,7 @@
   font-size: 0.74rem;
   font-weight: 700;
   color: #ffffff;
-  background: #3f51b5;
+  background: #fc4c02;
   border-radius: 20px;
   padding: 1px 8px;
   white-space: nowrap;
@@ -296,7 +295,7 @@
 
 .history-expand-hint {
   font-size: 0.68rem;
-  color: #5c6bc0;
+  color: #fc4c02;
   margin-top: 1px;
   user-select: none;
 }
@@ -337,12 +336,12 @@
 
 .data-btn:hover {
   background: #2e2e2e;
-  border-color: #5c6bc0;
+  border-color: #fc4c02;
   color: #ffffff;
 }
 
 .data-btn:focus-visible {
-  outline: 2px solid #8ea0ff;
+  outline: 2px solid #fd6a2a;
   outline-offset: 2px;
 }
 
@@ -380,7 +379,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #3f51b5;
+  background: #fc4c02;
   animation: loading-bounce 1.2s ease-in-out infinite;
 }
 
