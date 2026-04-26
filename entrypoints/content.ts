@@ -92,8 +92,8 @@ async function runKudosProcess(onProgress?: (payload: ProgressPayload) => void):
         let consecutiveFilled = 0;
         let idleScrolls = 0;
         let hasStarted = false;
-        const MAX_CONSECUTIVE_FILLED = 10;
-        const MAX_IDLE_SCROLLS = 3;
+        const MAX_CONSECUTIVE_FILLED = 20;
+        const MAX_IDLE_SCROLLS = 5;
 
         // Always start from the top of the feed.
         window.scrollTo({top: 0, behavior: 'auto'});
