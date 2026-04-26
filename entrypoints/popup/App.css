@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&display=swap');
+
 .popup-container {
   width: 360px;
   max-height: 620px;
@@ -21,10 +23,12 @@
 
 .app-name {
   margin: 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: #f1f3f4;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fc4c02;
   flex-shrink: 0;
 }
 
