@@ -10,6 +10,7 @@
     "build": "wxt build -b firefox",
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
+    "xpi": "node scripts/make-xpi.mjs",
     "compile": "tsc --noEmit",
     "postinstall": "wxt prepare"
   },
