@@ -345,6 +345,37 @@
   outline-offset: 2px;
 }
 
+.paste-zone {
+  margin-top: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  background: #1a1a1a;
+  border: 1.5px dashed #3a3a3a;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.78rem;
+  font-family: inherit;
+  color: #6e7680;
+  resize: none;
+  outline: none;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.paste-zone::placeholder {
+  color: #6e7680;
+}
+
+.paste-zone:focus {
+  border-color: #fc4c02;
+  color: #e8eaed;
+}
+
+.drop-zone-active {
+  border-color: #fc4c02;
+  background: #1e0d00;
+  color: #fc4c02;
+}
+
 .data-status {
   margin: 8px 0 0;
   font-size: 0.78rem;

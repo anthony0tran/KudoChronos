@@ -32,7 +32,6 @@ function App() {
     const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const recipientsRef = useRef<string[]>([]);
-    const importFileRef = useRef<HTMLInputElement>(null);
 
     const toggleExpanded = (index: number) => {
         setExpandedItems((prev) => {
@@ -146,18 +145,9 @@ function App() {
         URL.revokeObjectURL(url);
     };
 
-    const handleImportClick = () => {
+    const processImportText = async (text: string) => {
         setImportStatus('idle');
-        importFileRef.current?.click();
-    };
-
-    const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        // reset so the same file can be re-imported
-        e.target.value = '';
         try {
-            const text = await file.text();
             const raw: unknown = JSON.parse(text);
             const ledger: KudosLedger = parseKudosLedger(raw);
             await browser.storage.local.set({[KUDOS_LEDGER_KEY]: ledger});
@@ -168,6 +158,11 @@ function App() {
         } catch {
             setImportStatus('error');
         }
+    };
+
+    const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+        const text = e.clipboardData.getData('text');
+        if (text) await processImportText(text);
     };
 
     const handleAbout = () => {
@@ -340,10 +335,17 @@ function App() {
                             <button className="data-btn" onClick={handleExport} aria-label="Export statistics as JSON">
                                 ↓ Export
                             </button>
-                            <button className="data-btn" onClick={handleImportClick} aria-label="Import statistics from JSON file">
-                                ↑ Import
-                            </button>
                         </div>
+                        <textarea
+                            className="paste-zone"
+                            placeholder="↑ Import: paste exported JSON here"
+                            rows={2}
+                            value=""
+                            onChange={() => {}}
+                            onPaste={handlePaste}
+                            aria-label="Paste exported JSON to import"
+                            spellCheck={false}
+                        />
                         {importStatus === 'success' && (
                             <p className="data-status data-status-success" role="status">
                                 Stats imported successfully.
@@ -351,17 +353,9 @@ function App() {
                         )}
                         {importStatus === 'error' && (
                             <p className="data-status data-status-error" role="alert">
-                                Invalid file. Please import a valid KudoChronos JSON export.
+                                Invalid JSON. Please paste a valid KudoChronos export.
                             </p>
                         )}
-                        <input
-                            ref={importFileRef}
-                            type="file"
-                            accept="application/json,.json"
-                            aria-hidden="true"
-                            style={{display: 'none'}}
-                            onChange={handleImportFile}
-                        />
                     </section>
                 </>
             )}
