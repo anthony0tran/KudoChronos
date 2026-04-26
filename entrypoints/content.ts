@@ -111,6 +111,12 @@ async function runKudosProcess(onProgress?: (payload: ProgressPayload) => void):
                 processedEntries.add(entry);
                 processedThisPass = true;
 
+                // Skip club posts – the owner-avatar href points to /clubs/ instead of /athletes/.
+                const ownerAvatar = entry.querySelector('[data-testid="owner-avatar"]');
+                if (ownerAvatar?.getAttribute('href')?.includes('/clubs/')) {
+                    continue;
+                }
+
                 const unfilledKudos = entry.querySelector('[data-testid="unfilled_kudos"]') as HTMLElement | null;
                 const filledKudos = entry.querySelector('[data-testid="filled_kudos"]');
 

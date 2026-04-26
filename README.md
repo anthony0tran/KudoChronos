@@ -19,14 +19,14 @@ Open the popup, hit **Give kudos**, and watch the counter climb. When it's done,
 
 ## 🛠 Technical Specs
 
-| | |
-|---|---|
-| **Platform** | Firefox (Manifest V2 via WXT) |
-| **Framework** | [WXT](https://wxt.dev/) `v0.20` — zero-config web extension tooling |
-| **UI** | React `19` + TypeScript |
-| **Build** | Vite (via WXT), TypeScript `6` |
-| **Storage** | `browser.storage.local` — persists a kudos ledger (`totalKudosGiven`, `kudosByPerson`, `history`) |
-| **Permissions** | `storage`, `notifications` |
+|                 |                                                                                                   |
+|-----------------|---------------------------------------------------------------------------------------------------|
+| **Platform**    | Firefox (Manifest V2 via WXT)                                                                     |
+| **Framework**   | [WXT](https://wxt.dev/) `v0.20` — zero-config web extension tooling                               |
+| **UI**          | React `19` + TypeScript                                                                           |
+| **Build**       | Vite (via WXT), TypeScript `6`                                                                    |
+| **Storage**     | `browser.storage.local` — persists a kudos ledger (`totalKudosGiven`, `kudosByPerson`, `history`) |
+| **Permissions** | `storage`, `notifications`                                                                        |
 
 ### Architecture
 
