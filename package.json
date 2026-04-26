@@ -1,8 +1,8 @@
 {
   "name": "kudo-chronos",
-  "description": "A firefox extension to give kudos to your followers on Strava",
+  "description": "Automatically give kudos to your Strava followers",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "scripts": {
     "generate-icons": "node scripts/generate-icons.mjs",
