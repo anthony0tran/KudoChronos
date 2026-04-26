@@ -30,6 +30,7 @@ function App() {
     const [history, setHistory] = useState<KudosRunEntry[]>([]);
     const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
     const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
+    const [isLoading, setIsLoading] = useState<boolean>(true);
     const recipientsRef = useRef<string[]>([]);
     const importFileRef = useRef<HTMLInputElement>(null);
 
@@ -58,8 +59,10 @@ function App() {
     };
 
     useEffect(() => {
-        loadFeedCount().catch(console.error);
-        refreshKudosLedger().catch(console.error);
+        Promise.all([
+            loadFeedCount().catch(console.error),
+            refreshKudosLedger().catch(console.error),
+        ]).finally(() => setIsLoading(false));
 
         const onMessage = (message: unknown) => {
             if (!isKudosProgressMessage(message)) return;
@@ -178,37 +181,45 @@ function App() {
 
     return (
         <div className="popup-container">
-            <header className="popup-header">
-                <p className="app-name">KudoChronos</p>
-                <div className="header-actions">
-                    <nav className="view-tabs" role="tablist">
-                        <button
-                            role="tab"
-                            aria-selected={activeTab === 'home'}
-                            className={`view-tab${activeTab === 'home' ? ' view-tab-active' : ''}`}
-                            onClick={() => setActiveTab('home')}
-                        >
-                            Home
-                        </button>
-                        <button
-                            role="tab"
-                            aria-selected={activeTab === 'dashboard'}
-                            className={`view-tab${activeTab === 'dashboard' ? ' view-tab-active' : ''}`}
-                            onClick={() => setActiveTab('dashboard')}
-                        >
-                            Dashboard
-                        </button>
-                    </nav>
-                    <button
-                        className="about-btn"
-                        onClick={handleAbout}
-                        title="View on GitHub"
-                        aria-label="About KudoChronos on GitHub"
-                    >
-                        About
-                    </button>
+            {isLoading ? (
+                <div className="loading-screen" aria-label="Loading">
+                    <span className="loading-dot" />
+                    <span className="loading-dot" />
+                    <span className="loading-dot" />
                 </div>
-            </header>
+            ) : (
+            <>
+                <header className="popup-header">
+                    <p className="app-name">KudoChronos</p>
+                    <div className="header-actions">
+                        <nav className="view-tabs" role="tablist">
+                            <button
+                                role="tab"
+                                aria-selected={activeTab === 'home'}
+                                className={`view-tab${activeTab === 'home' ? ' view-tab-active' : ''}`}
+                                onClick={() => setActiveTab('home')}
+                            >
+                                Home
+                            </button>
+                            <button
+                                role="tab"
+                                aria-selected={activeTab === 'dashboard'}
+                                className={`view-tab${activeTab === 'dashboard' ? ' view-tab-active' : ''}`}
+                                onClick={() => setActiveTab('dashboard')}
+                            >
+                                Dashboard
+                            </button>
+                        </nav>
+                        <button
+                            className="about-btn"
+                            onClick={handleAbout}
+                            title="View on GitHub"
+                            aria-label="About KudoChronos on GitHub"
+                        >
+                            About
+                        </button>
+                    </div>
+                </header>
 
             {activeTab === 'home' && (
                 <>
@@ -353,6 +364,8 @@ function App() {
                         />
                     </section>
                 </>
+            )}
+            </>
             )}
         </div>
     );
