@@ -21,7 +21,11 @@ type ProgressPayload = {
 
 let isRunning = false;
 const KUDOS_LEDGER_KEY = 'kudosLedger';
-const OWN_NAME_TO_SKIP = 'Anthony Tran';
+
+function getOwnName(): string | null {
+    const el = document.querySelector('[data-testid="dashboard-athlete-name"]');
+    return el?.textContent?.trim() ?? null;
+}
 
 const sleep = (ms: number) =>
     new Promise((resolve) =>
@@ -112,7 +116,8 @@ async function runKudosProcess(onProgress?: (payload: ProgressPayload) => void):
 
                 if (unfilledKudos) {
                     const personName = getOwnerNameFromEntry(entry);
-                    if (personName === OWN_NAME_TO_SKIP) {
+                    const ownName = getOwnName();
+                    if (ownName && personName === ownName) {
                         continue;
                     }
 
