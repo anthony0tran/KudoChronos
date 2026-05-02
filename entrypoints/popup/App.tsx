@@ -258,12 +258,15 @@ function App() {
                                 Top recipients
                             </h2>
                             <ul>
-                                {visibleRecipients.map(([name, count]) => (
-                                    <li key={name}>
-                                        <span>{name}</span>
-                                        <strong>{count}</strong>
-                                    </li>
-                                ))}
+                                {visibleRecipients.map(([name, count], i) => {
+                                    const rank = topRecipients.findIndex(([, c]) => c === count) + 1;
+                                    return (
+                                        <li key={name}>
+                                            <span><span className="recipients-rank">#{rank}</span>{name}</span>
+                                            <strong>{count}</strong>
+                                        </li>
+                                    );
+                                })}
                             </ul>
                         </section>
                     )}

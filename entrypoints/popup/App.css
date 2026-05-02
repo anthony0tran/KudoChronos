@@ -183,6 +183,15 @@
   color: #c2c7cc;
 }
 
+.recipients-rank {
+  font-size: 0.70rem;
+  font-weight: 700;
+  color: #fc4c02;
+  margin-right: 6px;
+  min-width: 1.6em;
+  display: inline-block;
+}
+
 .recipients-panel strong {
   font-size: 0.88rem;
   color: #ffffff;
