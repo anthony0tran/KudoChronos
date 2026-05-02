@@ -2,7 +2,7 @@
   "name": "kudo-chronos",
   "description": "Automatically give kudos to your Strava followers",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "scripts": {
     "generate-icons": "node scripts/generate-icons.mjs",
@@ -12,7 +12,8 @@
     "zip:firefox": "wxt zip -b firefox",
     "xpi": "node scripts/make-xpi.mjs",
     "compile": "tsc --noEmit",
-    "postinstall": "wxt prepare"
+    "postinstall": "wxt prepare",
+    "update": "npx npm-check-updates -u && npm install"
   },
   "dependencies": {
     "react": "^19.2.5",
