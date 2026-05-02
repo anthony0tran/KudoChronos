@@ -157,6 +157,15 @@
   color: #e8eaed;
 }
 
+.recipients-panel-expandable {
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.recipients-panel-expandable:hover {
+  border-color: #fc4c02;
+}
+
 .recipients-panel ul {
   list-style: none;
   margin: 0;

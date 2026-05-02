@@ -29,6 +29,7 @@ function App() {
     const [kudosByPerson, setKudosByPerson] = useState<Record<string, number>>({});
     const [history, setHistory] = useState<KudosRunEntry[]>([]);
     const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
+    const [showAllRecipients, setShowAllRecipients] = useState<boolean>(false);
     const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const recipientsRef = useRef<string[]>([]);
@@ -170,9 +171,11 @@ function App() {
     };
 
     const topRecipients = useMemo(
-        () => Object.entries(kudosByPerson).sort((a, b) => b[1] - a[1]).slice(0, 5),
+        () => Object.entries(kudosByPerson).sort((a, b) => b[1] - a[1]),
         [kudosByPerson],
     );
+
+    const visibleRecipients = showAllRecipients ? topRecipients : topRecipients.slice(0, 5);
 
     return (
         <div className="popup-container">
@@ -246,10 +249,16 @@ function App() {
                     </section>
 
                     {topRecipients.length > 0 && (
-                        <section className="recipients-panel">
-                            <h2>Top recipients</h2>
+                        <section
+                            className={`recipients-panel${topRecipients.length > 5 ? ' recipients-panel-expandable' : ''}`}
+                            onClick={topRecipients.length > 5 ? () => setShowAllRecipients((v) => !v) : undefined}
+                            aria-expanded={topRecipients.length > 5 ? showAllRecipients : undefined}
+                        >
+                            <h2>
+                                Top recipients
+                            </h2>
                             <ul>
-                                {topRecipients.map(([name, count]) => (
+                                {visibleRecipients.map(([name, count]) => (
                                     <li key={name}>
                                         <span>{name}</span>
                                         <strong>{count}</strong>
